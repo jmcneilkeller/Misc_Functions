@@ -95,3 +95,28 @@ def distplot(data,bins=10,color='indigo'):
         sns.distplot(data[column], bins=10, color='indigo',
                           hist_kws=dict(edgecolor="k", linewidth=2))
         plt.show()
+
+def visualize_chisq(chisq_stat, df, alpha):
+    # initialize a matplotlib "figure"
+    fig = plt.figure(figsize=(16,10))
+    # get the current "axis" out of the figure
+    ax = fig.gca()
+
+    # X-values will be adjusted for each graph.
+    xs = np.linspace(0, 7, 50)
+    ys = stats.chi2.pdf(xs, df)
+    ax.plot(xs, ys, 'r-', lw=5, alpha=alpha, label='chi2 pdf')
+    # plot the lines using matplotlib's plot function:
+    ax.plot(xs, ys, linewidth=2, color='darkblue')
+
+    ax.xlabel = 'Chi-Sqaured Values'
+    # plot a vertical line for our measured difference in rates t-statistic
+    ax.axvline(chisq_stat, color='red', linestyle='--', lw=5,label='chi-sq-statistic')
+    chi_sq_crit = stats.chi2.ppf(1-alpha, df)
+    ax.plot(xs, ys, linewidth=1, color='darkblue')
+    ax.axvline(chi_sq_crit,color='green',linestyle='--',lw=4,label='crit chi-sq-value')
+    ax.fill_betweenx(ys,xs,chi_sq_crit, where= xs > chi_sq_crit)
+
+    ax.legend()
+    plt.show()
+    return None
