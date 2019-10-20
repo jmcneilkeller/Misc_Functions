@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 sns.set_style('darkgrid',{'axes.edgecolor': '.9'})
 
 def kde_hist(dataframe):
@@ -92,7 +93,7 @@ def plot_confusion_matrix(y_test, y_pred_class, classes,
 def distplot(data,bins=10,color='indigo'):
     plt.rcParams["patch.force_edgecolor"] = True
     for column in data:
-        sns.distplot(data[column], bins=10, color='indigo',
+        sns.distplot(data[column], bins=bins, color=color,
                           hist_kws=dict(edgecolor="k", linewidth=2))
         plt.show()
 
