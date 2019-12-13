@@ -1,4 +1,15 @@
-def resamplingDataPrep(X_train, y_train, target_var): # ! should be be call upSamplingDataPrep?
+import pandas as pd
+from sklearn.utils import resample
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import TomekLinks
+
+
+def resample_prep(X_train, y_train, target_var):
+    """ Prepares training data for resampling.
+    Train test split must be done first.
+    Takes training data and name of the target variable column.
+    Assumes pandas dataframe inputs.
+    """
     # concatenate our training data back together
     resampling = X_train.copy()
     resampling[target_var] = y_train.values
@@ -10,33 +21,36 @@ def resamplingDataPrep(X_train, y_train, target_var): # ! should be be call upSa
     print('minority_class: '+ str(len(minority_class)))
     return majority_class, minority_class
 
-def upSampleMinority(target_var, minority_class, majority_class):  # ! double check params needed
-    # upsample minority
+def upsample(target_var, minority_class, majority_class, replace=False, ratio=1.0):
+    """Upsamples minority class using scikit learn resample.
+    The ratio argument is the percentage of the upsampled minority class in relation
+    to the majority class. Default is 1.0.
+    """
     minority_upsampled = resample(minority_class,
-                          replace=True, # sample with replacement
-                          n_samples=len(majority_class), # match number in majority class
+                          replace=replace, # sample with or without replacement
+                          n_samples=round(len(majority_class)*ratio),
                           random_state=23) # reproducible results
     # combine majority and upsampled minority
     upsampled = pd.concat([majority_class, minority_upsampled])
     # check new class counts
     print(upsampled[target_var].value_counts())
     # return new upsampled X_train, y_train
-    X_train_upsampled = upsampled.drop(target_var, axis=1)
     y_train_upsampled = upsampled[target_var]
+    X_train_upsampled = upsampled.drop(target_var, axis=1)
     return X_train_upsampled, y_train_upsampled
 
-def upSampleMinoritySMOTE(X_train, y_train):
-    sm = SMOTE(random_state=23, ratio=1.0)
+def upsample_SMOTE(X_train, y_train, ratio=1.0):
+    sm = SMOTE(random_state=23, ratio=ratio)
     X_train_sm, y_train_sm = sm.fit_sample(X_train, y_train)
     print(len(X_train_sm), len(y_train_sm))
     return X_train_sm, y_train_sm
 
-def downSampleMajority(target_var, minority_class, majority_class):
+def downsample(target_var, minority_class, majority_class, replace=False):
     # downsample majority
     majority_downsampled = resample(majority_class,
-                                    replace = False, # sample without replacement
-                                    n_samples = len(defaulted), # match minority n
-                                    random_state = 23) # reproducible results
+                                    replace=replace, # sample without replacement
+                                    n_samples=len(minority_class), # match minority n
+                                    random_state=23) # reproducible results
     # combine majority and upsampled minority
     downsampled = pd.concat([majority_downsampled, minority_class])
     # check new class counts
@@ -46,7 +60,7 @@ def downSampleMajority(target_var, minority_class, majority_class):
     y_train_downsampled = downsampled[target_var]
     return X_train_downsampled, y_train_downsampled
 
-def downSampleMajorityTomekLinks(X_train, y_train):
+def downsample_Tomek(X_train, y_train):
     tl = TomekLinks()
     X_train_tl, y_train_tl = tl.fit_sample(X_train, y_train)
     print(X_train_tl.count(), len(y_train_tl))
