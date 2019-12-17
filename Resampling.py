@@ -40,16 +40,20 @@ def upsample(target_var, minority_class, majority_class, replace=False, ratio=1.
     return X_train_upsampled, y_train_upsampled
 
 def upsample_SMOTE(X_train, y_train, ratio=1.0):
-    sm = SMOTE(random_state=23, ratio=ratio)
-    X_train_sm, y_train_sm = sm.fit_sample(X_train, y_train)
+    """Upsamples minority class using SMOTE.
+    Ratio argument is the percentage of the upsampled minority class in relation
+    to the majority class. Default is 1.0
+    """
+    sm = SMOTE(random_state=23, sampling_strategy=ratio)
+    X_train_sm, y_train_sm = sm.fit_resample(X_train, y_train)
     print(len(X_train_sm), len(y_train_sm))
     return X_train_sm, y_train_sm
 
 def downsample(target_var, minority_class, majority_class, replace=False):
     # downsample majority
     majority_downsampled = resample(majority_class,
-                                    replace=replace, # sample without replacement
-                                    n_samples=len(minority_class), # match minority n
+                                    replace=replace, # sample with or without replacement
+                                    n_samples=len(minority_class), # match minority class
                                     random_state=23) # reproducible results
     # combine majority and upsampled minority
     downsampled = pd.concat([majority_downsampled, minority_class])
@@ -62,6 +66,6 @@ def downsample(target_var, minority_class, majority_class, replace=False):
 
 def downsample_Tomek(X_train, y_train):
     tl = TomekLinks()
-    X_train_tl, y_train_tl = tl.fit_sample(X_train, y_train)
+    X_train_tl, y_train_tl = tl.fit_resample(X_train, y_train)
     print(X_train_tl.count(), len(y_train_tl))
     return X_train_tl, y_train_tl
