@@ -3,6 +3,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import Lasso
 
 
 # Create train, test, split
@@ -38,8 +41,6 @@ test_rmse = np.sqrt(metrics.mean_squared_error(y_test, y_test_pred))
 print('Root Mean Squared Error:' + str(np.sqrt(metrics.mean_squared_error(y_test, y_test_pred))))
 
 # THEN PLOT.
-
-from sklearn.preprocessing import PolynomialFeatures
 
 # Create polynomials first, then scale.
 poly_2 = PolynomialFeatures(degree=2, include_bias=False)
@@ -83,7 +84,6 @@ RMSE_R01 =np.sqrt(metrics.mean_squared_error(y_test, y_pred_ridge))
 print('Test RMSE:', RMSE_R01)
 
 # LASSO
-from sklearn.linear_model import Lasso
 # Adjust alpha to change how you regularize.
 lasso = Lasso(alpha=0.1, normalize=False)
 
@@ -122,30 +122,54 @@ def logiRegr(X_train, y_train, X_test, y_test, params):
                           cmap=plt.cm.Blues)
 
 # Decision tree classifier
-def deciTree(X_train, y_train, X_test, y_test):
-    clf = DecisionTreeClassifier() # Create Decision Tree classifer object
-    clf = clf.fit(X_train,y_train) # Train Decision Tree Classifer
-    y_pred_train = clf.predict(X_train) #predict the training set
-    y_pred_test = clf.predict(X_test) #Predict the response for test dataset
+def deciTree(X_train, y_train, X_test, y_test,**kwargs):
+    dt = DecisionTreeClassifier(random_state=1, **kwargs) # Create Decision Tree classifer object
+    dt_fit = clf.fit(X_train,y_train) # Train Decision Tree Classifer
+    y_pred_train = dt_fit.predict(X_train) #predict the training set
+    y_pred_class = dt_fit.predict(X_test) #Predict the response for test dataset
 
     # Model Accuracy, how often is the classifier correct?
-    print("Training F1 Score:",metrics.f1_score(y_train, y_pred_train))
-    print("Testing F1 Score:",metrics.f1_score(y_test, y_pred_test))
+    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
+    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
+    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
+    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
 
-
-def knn(k_number, X_train, y_train, X_test, y_test):
-    knn = KNeighborsClassifier(n_neighbors=k_number)
+# kNN
+def knn(X_train, y_train, X_test, y_test, **kwargs):
+    knn = KNeighborsClassifier(**kwargs)
     # train
     knn.fit(X_train, y_train)
     # test
     y_pred_class = knn.predict(X_test)
 
+    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
+    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
+    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
+    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
 
-    # check Accuracy
-    print('Test Accuracy score: ', accuracy_score(y_test, y_pred_class))
-    # check F1 score
-    print('Test F1 score: ', f1_score(y_test, y_pred_class))
-    return y_pred_class
+# Random Forest
+def randomForest(X_train, y_train, X_test, y_test,**kwargs):
+    rf = RandomForestClassifier(random_state=1, **kwargs) # Create Decision Tree classifer object
+    rf_fit = rf.fit(X_train,y_train) # Train Decision Tree Classifer
+    y_pred_train = rf_fit.predict(X_train) #predict the training set
+    y_pred_class = rf_fit.predict(X_test) #Predict the response for test dataset
+
+    # Model Accuracy, how often is the classifier correct?
+    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
+    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
+    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
+    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
+
+# XG Boost
+def xgbClass(X_train, y_train, X_test, y_test,**kwargs):
+    xg_clf = xgb.XGBClassifier(seed=1,**kwargs)
+    xg_fit = xg_clf.fit(X_train,y_train)
+    y_pred_class = xg_fit.predict(X_test)
+
+    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
+    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
+    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
+    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
 
 # For removing outliers.
 # For each column, first it computes the Z-score of each value in the column, relative to the column mean and standard deviation.
