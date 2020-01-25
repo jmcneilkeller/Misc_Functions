@@ -1,176 +1,112 @@
-#
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 from sklearn import metrics
-from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
+import itertools
+import matplotlib.pyplot as plt
+from matplotlib.ticker import IndexLocator
+import pprint
+from sklearn.svm import SVC
 
+def plot_cm(y_test, y_pred_class,classes=['NON-default','DEFAULT']):
+    # plots confusion matrix
+    fig, ax = plt.subplots()
+    cm = confusion_matrix(y_test, y_pred_class)
 
-# Create train, test, split
-# Random state is our choice. Defaults to 20% for test, but adjustable.
-X_train, X_test, y_train, y_test = train_test_split(features, target, random_state=34,test_size=0.2)
-print(X_train.shape, y_train.shape)
-print(X_test.shape, y_test.shape)
+    im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    ax.figure.colorbar(im, ax=ax)
+    plt.title("Confusion Matrix")
+    ax.set(yticks=[-0.5, 1.5],
+           xticks=[0, 1],
+           yticklabels=classes,
+           xticklabels=classes)
+    ax.yaxis.set_major_locator(IndexLocator(base=1, offset=0.5))
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], 'd'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
 
-# Instantiate scaler object.
-scalar = StandardScaler()
-# Scalar learns the std, etc.. for all features. No need to fit your test data.
-scalar.fit(X_train)
-# This does the scaling.
-X_train_scaled  = scalar.transform(X_train)
-X_test_scaled = scalar.transform(X_test)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
 
-# Run your regression.
-lm = LinearRegression()
-lm.fit(X_train_scaled,y_train)
-y_train_pred = lm.predict(X_train_scaled)
+def scores(y_test, y_pred_class):
+    # Prints formatted classification metrics.
+    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
+    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
+    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
+    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
 
-# Check your RMSE
-train_rmse = np.sqrt(metrics.mean_squared_error(y_train, y_train_pred))
+def svmClass(X_train, y_train, X_test, y_test, **kwargs):
+    # Instantiate model. Use kwargs to pass parameters.
+    # Pass GridSearch best params with ** to unpack.
+    svm = SVC(random_state=1,**kwargs)
+    # Fit to training data.
+    svm.fit(X_train, y_train)
+    # Class predictions
+    y_pred_class = svm.predict(X_test)
+    # Scoring metrics
+    scores(y_test, y_pred_class)
+    # Plot confusion matrix
+    plot_cm(y_test,y_pred_class)
 
-print('Root Mean Squared Error:' , train_rmse)
-
-# Scale your test
-X_test_scaled = scalar.transform(X_test)
-# Predict and get your test RMSE.
-y_test_pred = lm.predict(X_test_scaled)
-
-test_rmse = np.sqrt(metrics.mean_squared_error(y_test, y_test_pred))
-print('Root Mean Squared Error:' + str(np.sqrt(metrics.mean_squared_error(y_test, y_test_pred))))
-
-# THEN PLOT.
-
-# Create polynomials first, then scale.
-poly_2 = PolynomialFeatures(degree=2, include_bias=False)
-poly_2.fit(X_train)
-X_train_2= pd.DataFrame(poly_2.transform(X_train), columns=poly_2.get_feature_names(columns))
-
-columns_2  = poly_2.get_feature_names(columns)
-
-scalar_2 = StandardScaler()
-
-scalar_2.fit(X_train_2)
-X_train_2_scaled  = scalar_2.transform(X_train_2)
-
-lm2 = LinearRegression()
-model2 = lm2.fit(X_train_2_scaled, y_train)
-y_train_2_pred = lm2.predict(X_train_2_scaled)
-
-train_2_rmse = np.sqrt(metrics.mean_squared_error(y_train, y_train_2_pred))
-
-X_test_2= pd.DataFrame(poly_2.transform(X_test), columns=poly_2.get_feature_names(columns))
-X_test_2_scaled = scalar_2.transform(X_test_2)
-
-y_test_pred_2 = lm2.predict(X_test_2_scaled)
-
-test_2_rmse = np.sqrt(metrics.mean_squared_error(y_test, y_test_pred_2))
-
-# test2_mae = metrics.mean_absolute_error(y_test2, y_pred2)
-
-print(train_2_rmse, test_2_rmse)
-
-## RIDGE
-# Alpha is our hyperparameter. Adjust to test.
-ridgeReg = Ridge(alpha=0.1, normalize=True)
-
-ridgeReg.fit(X_train_2_scaled, y_train)
-
-y_pred_ridge = ridgeReg.predict(X_test_2_scaled)
-
-#calculating rmse
-RMSE_R01 =np.sqrt(metrics.mean_squared_error(y_test, y_pred_ridge))
-print('Test RMSE:', RMSE_R01)
-
-# LASSO
-# Adjust alpha to change how you regularize.
-lasso = Lasso(alpha=0.1, normalize=False)
-
-lasso.fit(X_train,y_train)
-
-y_train_pred = lasso.predict(X_train)
-y_pred = lasso.predict(X_test)
-
-train_rmse = metrics.mean_absolute_error(y_train, y_train_pred)
-test_rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
-print('Training Error: '+ str(train_rmse) )
-print('Testing Error: '+ str(test_rmse) )
-
-lasso_coef01 = pd.DataFrame(data=lasso.coef_).T
-lasso_coef01.columns = X_train.columns
-lasso_coef01 = lasso_coef01.T.sort_values(by=0).T
-lasso_coef01.plot(kind='bar', title='Modal Coefficients', legend=True, figsize=(16,8))
-
-# Logistic regression model
-def logiRegr(X_train, y_train, X_test, y_test, params):
-    logreg = LogisticRegression()
+def logiRegr(X_train, y_train, X_test, y_test,**kwargs):
+    # Instantiate model. Use kwargs to pass parameters.
+    # Pass GridSearch best params with ** to unpack.
+    logreg = LogisticRegression(random_state=1,**kwargs)
+    # Fit to training data.
     logreg.fit(X_train, y_train)
-    # examine coefficients
-    # print(zip(X_train.columns, logreg.coef_[0]))
-    # print(logreg.coef_)
-    # class predictions (not predicted probabilities)
+    # Examine coefficients
+    pprint.pprint(list(zip(X_train.columns,logreg.coef_[0])))
+    # Class predictions (not predicted probabilities)
     y_pred_class = logreg.predict(X_test)
-    print('Classification Accuracy: ', metrics.accuracy_score(y_test, y_pred_class))
-    print('Test F1 score: ', f1_score(y_test, y_pred_class))
-    # plot confusion matrix
-    cm = confusion_matrix(y_test,y_pred_class)
-    classes = ['DEFAULT', 'NON-default']
-    plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues)
+    # Scoring metrics
+    scores(y_test, y_pred_class)
+    # Plot confusion matrix
+    plot_cm(y_test,y_pred_class)
 
-# Decision tree classifier
+
 def deciTree(X_train, y_train, X_test, y_test,**kwargs):
-    dt = DecisionTreeClassifier(random_state=1, **kwargs) # Create Decision Tree classifer object
-    dt_fit = clf.fit(X_train,y_train) # Train Decision Tree Classifer
-    y_pred_train = dt_fit.predict(X_train) #predict the training set
-    y_pred_class = dt_fit.predict(X_test) #Predict the response for test dataset
+    # Instantiate model. Use kwargs to pass parameters.
+    # Pass GridSearch best params with ** to unpack.
+    dt = DecisionTreeClassifier(random_state=1, **kwargs)
+    # Fit to training data.
+    dt.fit(X_train,y_train)
+    # Class predictions
+    y_pred_class = dt.predict(X_test)
+    # Scoring metrics
+    scores(y_test, y_pred_class)
+    # Confusion matrix
+    plot_cm(y_test,y_pred_class)
 
-    # Model Accuracy, how often is the classifier correct?
-    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
-    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
-    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
-    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
-
-# kNN
-def knn(X_train, y_train, X_test, y_test, **kwargs):
-    knn = KNeighborsClassifier(**kwargs)
-    # train
-    knn.fit(X_train, y_train)
-    # test
-    y_pred_class = knn.predict(X_test)
-
-    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
-    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
-    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
-    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
-
-# Random Forest
 def randomForest(X_train, y_train, X_test, y_test,**kwargs):
-    rf = RandomForestClassifier(random_state=1, **kwargs) # Create Decision Tree classifer object
-    rf_fit = rf.fit(X_train,y_train) # Train Decision Tree Classifer
-    y_pred_train = rf_fit.predict(X_train) #predict the training set
-    y_pred_class = rf_fit.predict(X_test) #Predict the response for test dataset
+    # Instantiate model. Use kwargs to pass parameters.
+    # Pass GridSearch best params with ** to unpack.
+    rf = RandomForestClassifier(random_state=1, **kwargs)
+    # Fit to training data.
+    rf.fit(X_train,y_train)
+    # Class predictions
+    y_pred_class = rf.predict(X_test)
+    # Scoring metrics
+    scores(y_test, y_pred_class)
+    # Confusion matrix
+    plot_cm(y_test,y_pred_class)
 
-    # Model Accuracy, how often is the classifier correct?
-    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
-    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
-    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
-    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
-
-# XG Boost
 def xgbClass(X_train, y_train, X_test, y_test,**kwargs):
-    xg_clf = xgb.XGBClassifier(seed=1,**kwargs)
-    xg_fit = xg_clf.fit(X_train,y_train)
-    y_pred_class = xg_fit.predict(X_test)
-
-    print('Classification Accuracy: ', format(accuracy_score(y_test, y_pred_class), '.3f'))
-    print('Precision score: ', format(precision_score(y_test, y_pred_class), '.3f'))
-    print('Recall score: ', format(recall_score(y_test, y_pred_class), '.3f'))
-    print('F1 score: ', format(f1_score(y_test, y_pred_class), '.3f'))
-
+    # Instantiate model. Use kwargs to pass parameters.
+    # Pass GridSearch best params with ** to unpack.
+    xg = xgb.XGBClassifier(seed=1,**kwargs)
+    # Fit to training data.
+    xg.fit(X_train,y_train)
+    # Class predictions
+    y_pred_class = xg.predict(X_test)
+    # Scoring metrics
+    scores(y_test, y_pred_class)
+    # Confusion matrix
+    plot_cm(y_test,y_pred_class)
 # For removing outliers.
 # For each column, first it computes the Z-score of each value in the column, relative to the column mean and standard deviation.
 # Then is takes the absolute of Z-score because the direction does not matter, only if it is below the threshold.
