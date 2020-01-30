@@ -55,34 +55,22 @@ sns.set(style="whitegrid")
 sns.residplot(y_test_pred, y_test, lowess=True, color="g")
 
 # Confusion matrix
-def plot_confusion_matrix(y_test, y_pred_class, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    cm = confusion_matrix(y_test,y_pred_class)
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion Matrix, without normalization')
+def plot_cm(y_test, y_pred_class,classes):
+    # plots confusion matrix
+    fig, ax = plt.subplots()
+    cm = confusion_matrix(y_test, y_pred_class)
 
-    print(cm)
-
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
+    im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    ax.figure.colorbar(im, ax=ax)
+    plt.title("Confusion Matrix")
+    ax.set(yticks=[-0.5, 1.5],
+           xticks=[0, 1],
+           yticklabels=classes,
+           xticklabels=classes)
+    ax.yaxis.set_major_locator(IndexLocator(base=1, offset=0.5))
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
+        plt.text(j, i, format(cm[i, j], 'd'),
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
 
@@ -121,3 +109,21 @@ def visualize_chisq(chisq_stat, df, alpha):
     ax.legend()
     plt.show()
     return None
+
+def plotSVC(title):
+    # create a mesh to plot in
+    x_min, x_max = X[:, 0].min() — 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() — 1, X[:, 1].max() + 1
+    h = (x_max / x_min)/100
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+    np.arange(y_min, y_max, h))
+    plt.subplot(1, 1, 1)
+    Z = svc.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+    plt.xlabel(‘Sepal length’)
+    plt.ylabel(‘Sepal width’)
+    plt.xlim(xx.min(), xx.max())
+    plt.title(title)
+    plt.show()
