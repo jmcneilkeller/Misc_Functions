@@ -8,7 +8,7 @@ def military_time(time):
     return datetime.strptime(time, '%I:%M:%S%p').strftime('%H:%M:%S')
 
 def typewriter(text, start=None, stop=None):
-    # Prints out in a typewriter effect to console. 
+    # Prints out in a typewriter effect to console.
     # Expects a string
     if start is None:
         start = 0.025
