@@ -14,3 +14,7 @@ def rfe(estimator,step,cv,scoring,X_train,y_train):
     print('\n'+'*'*20+'REMOVED'+'*'*20)
     pprint.pprint(list(removed_columns))
     return selected_columns
+
+# Normalizing data for SelectKBest "chi2".
+
+normed_data= (data - data.min(0)) / data.ptp(0)
