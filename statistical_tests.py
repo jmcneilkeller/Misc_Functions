@@ -71,5 +71,48 @@ def create_sample_distribution(data, dist_size=100, n=30):
     return sample_dist
 
 
+# function to calculate Cohen's d for independent samples
+def cohend(d1, d2):
+    # calculate the size of samples
+    n1, n2 = len(d1), len(d2)
+    # calculate the variance of the samples
+    s1, s2 = var(d1, ddof=1), var(d2, ddof=1)
+    # calculate the pooled standard deviation
+    s = sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
+    # calculate the means of the samples
+    u1, u2 = mean(d1), mean(d2)
+    # calculate the effect size
+    return (u1 - u2) / s
 
+import plotly.plotly as py
+import plotly.graph_objs as go
 
+@np.vectorize
+def power_grid(x,y):
+    power = TTestIndPower().solve_power(effect_size = x,
+                                        nobs1 = y,
+                                        alpha = 0.05)
+    return power
+
+X,Y = np.meshgrid(np.linspace(0.01, 1, 51),
+                  np.linspace(10, 1000, 100))
+X = X.T
+Y = Y.T
+
+Z = power_grid(X, Y) # power
+
+data = [go.Surface(x = effect_size, y= Y, z = Z)]
+
+layout = go.Layout(
+    title='Power Analysis',
+    scene = dict(
+                    xaxis = dict(
+                        title='effect size'),
+                    yaxis = dict(
+                        title='number of observations'),
+                    zaxis = dict(
+                        title='power'),)
+)
+
+fig = go.Figure(data=data, layout=layout)
+py.iplot(fig, filename='power_analysis')
