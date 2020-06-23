@@ -127,3 +127,15 @@ def plotSVC(title):
     plt.xlim(xx.min(), xx.max())
     plt.title(title)
     plt.show()
+
+
+fig= go.Figure(data=[
+    go.Bar(name=name, x=time_var, y=target),
+    go.Bar(name=name, x=time_var, y=target)
+    ])
+fig.add_trace(go.Scatter(name=name, x=time_var, y=average, mode='lines'))
+fig.add_trace(go.Scatter(name=name, x=time_var, y=finalaverage, mode='lines'))
+# Change the bar mode
+fig.update_layout(barmode='group')
+fig.update_layout(title_text=title)
+fig.show()
