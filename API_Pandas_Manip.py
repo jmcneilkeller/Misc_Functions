@@ -18,3 +18,5 @@ def get_sample_replace(data, n):
     #Random state seeds the sample generation for reproducibility.
     sample = data.sample(n, replace=True, random_state=1)
     return sample
+
+df_master['zone_total_trips'] = df_master.groupby('zones')['count'].transform('sum')
