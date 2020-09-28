@@ -44,3 +44,6 @@ mask = df.groupby(['COL_TO_MASK_BY'])['COL_TO_MASK_BY'].transform(mask_first).as
 
 # Return all rows from columns starting with a prefix.
 df.loc[:,df.columns.str.startswith('COLUMN_PREFIX')]
+
+# Find any columns where all values are null.
+df.columns[df.isnull().all()]
