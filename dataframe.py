@@ -47,3 +47,21 @@ df.loc[:,df.columns.str.startswith('COLUMN_PREFIX')]
 
 # Find any columns where all values are null.
 df.columns[df.isnull().all()]
+
+# Create top level column grouping.
+df.set_index([],inplace=True)
+new_df = (pd.concat([df.filter(like='COLUMN_PREFIX_TO_SORT_BY'),
+                    df.filter(like='OTHER_COLUMN_PREFIX')],
+                    axis=1,
+                    keys=('GROUP_COLUMN_1','GROUP_COLUMN_2')))
+
+# Find/replace within a text column.
+df['col'].replace({'Text_to_change':'New_text'},regex=True,inplace=True)
+
+# Adds commas for thousands place when exporting to file. Use .apply to run over full series.
+import re
+def thous(x,sep=',',dot='.'):
+    num,_,frac = str(x).partition(dot)
+    num = re.sub(r'(\d{3})(?=\d)',r'\1'+sep,num[::-1])[::-1]
+    num += dot + frac
+    return num
